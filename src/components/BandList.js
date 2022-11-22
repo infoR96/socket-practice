@@ -1,12 +1,30 @@
-import React,{useState,useEffect} from 'react'
+import React,{useState,useEffect, useContext} from 'react'
+import { SocketContext } from '../context/SocketContext';
 
-export const BandList = ({data,votar,borrar,renombrar}) => {
-    const [bands, setBands] = useState(data)
+export const BandList = () => {
+    const [bands, setBands] = useState([])
+    const {socket}=useContext(SocketContext);
 
-    useEffect(() => {
-        setBands(data);
-    }, [data]);
+     useEffect(() => {
+        socket.on('current-bands',(bands)=>{
+            setBands(bands);
+        })
+        return ()=> socket.off('current-bands')
+  }, [socket]);
 
+
+  // useEffect(() => {
+  //   socket.on('current-bands',(bands)=>{
+  //     setBand(bands);
+  //   })
+  // }, [socket]);
+
+
+  const cambiarNombre = (id,nombre)=>{
+      socket.emit('cambiar-nombre',{id,nombre});
+    }
+    
+    
     const cambioNombre = (event,id)=>{
         const nuevoNombre = event.target.value;
         setBands(bands=>bands.map(band=>{
@@ -18,7 +36,13 @@ export const BandList = ({data,votar,borrar,renombrar}) => {
         
     }
     const onPerdioFoco = (id,nombre)=>{
-        renombrar(id,nombre);
+        socket.emit('cambiar-nombre',{id,nombre});
+    }
+    const votar =(id)=>{
+      socket.emit('votar-banda',id);
+    }
+    const borrar =(id)=>{
+      socket.emit('borrar-banda',id);
     }
     
     const createRows =()=>{
@@ -35,7 +59,8 @@ export const BandList = ({data,votar,borrar,renombrar}) => {
                         onBlur= {()=>onPerdioFoco(band.id,band.name)}/>
                 </td>
                 <td><h3>{band.votes}</h3></td>
-                <td><button className='btn btn-danger' onClick={()=>borrar(band.id)}>Borrar</button></td>
+                <td><button className='btn btn-danger' 
+                onClick={()=>borrar(band.id)}>Borrar</button></td>
             </tr>
          ) )
         );
